@@ -1021,3 +1021,6 @@ class Array(AbstractObject):
 
     def get_class(self, universe):
         return universe.arrayClass
+
+    def prim_as_string(self, universe):
+        return universe.new_string(self.join(''))

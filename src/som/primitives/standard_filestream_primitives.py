@@ -30,6 +30,11 @@ def _prim_get_position(ivkbl, rcvr, args, call_frame):
     file = args[0]
     return ivkbl.get_universe().new_integer(int(file.get_position()))
 
+def _prim_close(ivkbl, rcvr, args, call_frame):
+    file = args[0]
+    file.close()
+    return nilObject
+
 def _prim_set_position_to(ivkbl, rcvr, args, call_frame):
     file = args[0]
     position = args[1]
@@ -57,8 +62,6 @@ def _prim_read_into_starting_at_count(ivkbl, rcvr, args, call_frame):
     content = stream.read(count.get_embedded_integer());
     collection.set_all(ivkbl.get_universe().new_character(' '))
 
-    size = len(content)
-
     i = 0
     for c in content:
         collection.set_indexable_field(i, ivkbl.get_universe().new_character(c))
@@ -73,6 +76,13 @@ def _prim_at_end(ivkbl, rcvr, args, call_frame):
     else:
         return falseObject
 
+def _prim_size_no_error(ivkbl, rcvr, args, call_frame):
+    file = args[0]
+    try:
+        return ivkbl.get_universe().new_integer(int(file.get_size()))
+    except:
+        return nilObject
+
 class StandardFileStreamPrimitives(Primitives):
 
     def install_primitives(self):
@@ -80,5 +90,7 @@ class StandardFileStreamPrimitives(Primitives):
         self._install_instance_primitive(Primitive("primGetPosition:",                self._universe, _prim_get_position))
         self._install_instance_primitive(Primitive("primSetPosition:to:",             self._universe, _prim_set_position_to))
         self._install_instance_primitive(Primitive("primSize:",                       self._universe, _prim_size))
+        self._install_instance_primitive(Primitive("primClose:",                       self._universe, _prim_close))
+        self._install_instance_primitive(Primitive("primSizeNoError:",                       self._universe, _prim_size_no_error))
         self._install_instance_primitive(Primitive("primRead:into:startingAt:count:", self._universe, _prim_read_into_starting_at_count))
         self._install_instance_primitive(Primitive("primAtEnd:",                      self._universe, _prim_at_end))

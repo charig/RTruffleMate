@@ -4,6 +4,8 @@ from som.vmobjects.method import Method
 from som.vmobjects.primitive   import Primitive
 from som.primitives.primitives import Primitives
 
+def _asString(ivkbl, rcvr, args, call_frame):
+    return rcvr.prim_as_string(ivkbl.get_universe())
 
 def _at(ivkbl, rcvr, args, call_frame):
     i    = args[0]
@@ -93,6 +95,7 @@ def _putAll(ivkbl, rcvr, args, call_frame):
 class ArrayPrimitives(Primitives):
     
     def install_primitives(self):
+        self._install_instance_primitive(Primitive("asString", self._universe, _asString))
         self._install_instance_primitive(Primitive("at:",     self._universe, _at))
         self._install_instance_primitive(Primitive("at:put:", self._universe, _atPut))
         self._install_instance_primitive(Primitive("length",  self._universe, _length))

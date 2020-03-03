@@ -22,6 +22,9 @@ class File(AbstractObject):
     def get_size(self):
         return self._size
 
+    def close(self):
+        return self._stream.close()
+
     def get_position(self):
         return self._stream.tell()
 

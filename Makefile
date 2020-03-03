@@ -86,7 +86,7 @@ mate-bench:
 #make BENCH=Storage.som matevm-bench
 matevm-bench:
 	# sudo nice -n-20 $(BIN) --mate -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) 10 0 1
-	$(BIN) --mate --trace-limit 15000 -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) 10 10 100
+	$(BIN) --mate --trace-limit 15000 -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) 1 1 1
 
 mate-iop:
 	make BENCH=VMReflectiveArgumentRead.som mate-bench
