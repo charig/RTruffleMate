@@ -89,11 +89,11 @@ class MatePrimitive(Primitive):
             # El mate enviroment no define el methodo correspondiente a este nodo
             return inv(self, receiver, arguments, call_frame)
 
-        sm_args = method.invoke_to_mate(receiver, [self, Array.from_objects([environment, trueObject] + arguments)], call_frame)
+        sm_args = method.invoke_to_mate(receiver, [self.get_signature(), Array.from_objects([environment, trueObject, receiver] + arguments)], call_frame)
         assert(isinstance(sm_args, Array))
         new_args = sm_args.as_argument_array()
 
-        return inv(self, receiver, new_args[2:], call_frame)
+        return inv(self, new_args[2], new_args[3:], call_frame)
 
 def empty_primitive(signature_string, universe):
     """ Return an empty primitive with the given signature """
