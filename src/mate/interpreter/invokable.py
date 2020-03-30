@@ -58,7 +58,7 @@ class MateInvokable(MateNode):
             # El mate enviroment no define el methodo correspondiente a este nodo
             return self._som_node.invoke(receiver, arguments, call_frame)
 
-        sm_args = method.invoke_to_mate(receiver, [self._som_node.get_method(), Array.from_objects([environment, trueObject] + arguments)], call_frame)
+        sm_args = method.invoke_to_mate(receiver, [self._som_node.get_method().get_signature(), Array.from_objects([environment, trueObject, receiver] + arguments)], call_frame)
         assert(isinstance(sm_args, Array))
         new_args = sm_args.as_argument_array()
 
@@ -69,10 +69,10 @@ class MateInvokable(MateNode):
             else:
                 environment = None
 
-            return self._som_node.invoke_from_mate(receiver, new_args[2:], call_frame, environment)
+            return self._som_node.invoke_from_mate(new_args[2], new_args[3:], call_frame, environment)
         else:
             # Sigo en meta level
-            return self._som_node.invoke_to_mate(receiver, new_args[2:], call_frame)
+            return self._som_node.invoke_to_mate(new_args[2], new_args[3:], call_frame)
 
     def reflective_op(self):
         return ReflectiveOp.MessageActivation

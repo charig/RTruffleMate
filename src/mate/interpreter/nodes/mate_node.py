@@ -27,7 +27,8 @@ class MateNode(ExpressionNode):
 
         value = None
         if not frame.meta_level():
-            value = self.do_mate_semantics(frame)
+            receiver = frame.get_self()
+            value = self.do_mate_semantics(frame, receiver)
 
         if value is None:
             return self._som_node.execute(frame)
@@ -37,10 +38,9 @@ class MateNode(ExpressionNode):
     def _lookup_meta_invokable(self, environment):
         return self._lookup_node.lookup_meta_invokable(environment)
 
-    def do_mate_semantics(self, frame):
+    def do_mate_semantics(self, frame, receiver):
         assert frame is not None
 
-        receiver = frame.get_self()
         environment = frame.get_meta_object_environment() or receiver.get_meta_object_environment()
 
         # No esta definido o es Nil

@@ -6,12 +6,16 @@ COMMAND   = ./som.sh
 TARGET    = src/targetsomstandalone.py
 
 # BENCHS_INCLUDES = $(shell find Examples/Benchmarks -type d -printf '%p:')
-#BENCHS_INCLUDES = Examples/Benchmarks/Mate/IndividualOperations:Examples/Benchmarks/Mate/Tracing:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/Mate/Immutability:Examples/Benchmarks/Mate/Immutability/Handles:Examples/Benchmarks/Mate/Immutability/DelegationProxies
-BENCHS_INCLUDES = Examples/Benchmarks/Mate/Immutability/DelegationProxies:Examples/Benchmarks/Mate/Immutability/Handles:Examples/Benchmarks/Mate/Immutability:Examples/Benchmarks/Mate/IndividualOperations:Examples/Benchmarks/Mate/Tracing:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json/
+# BENCHS_INCLUDES = Examples/Benchmarks/Mate/IndividualOperations:Examples/Benchmarks/Mate/Tracing:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json:Examples/Benchmarks/Mate/Immutability:Examples/Benchmarks/Mate/Immutability/Handles:Examples/Benchmarks/Mate/Immutability/DelegationProxies
+# BENCHS_INCLUDES = Examples/Benchmarks/Mate/Immutability/DelegationProxies:Examples/Benchmarks/Mate/Immutability/Handles:Examples/Benchmarks/Mate/Immutability:Examples/Benchmarks/Mate/IndividualOperations:Examples/Benchmarks/Mate/Tracing:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody:Examples/Benchmarks/Json/:Examples/Benchmarks/Mate/Columnar
 
-FILESYSTEM_INCLUDES = Smalltalk/Collections/Streams:Smalltalk/FileSystem/Core:Smalltalk/FileSystem/Disk:Smalltalk/FileSystem/Streams
+BENCHS_INCLUDES_HANDLES = Examples/Benchmarks/Mate/Immutability/Handles
+BENCHS_INCLUDES_MATE_AWF = $(shell find core-lib/Examples/Benchmarks/Mate/ImmutableAwf -type d -printf '%p:')
+BENCHS_INCLUDES = ${BENCHS_INCLUDES_HANDLES}:${BENCHS_INCLUDES_MATE_AWF}
 
 BASE_INCLUDES = Smalltalk:Smalltalk/Mate/:Smalltalk/Mate/MOP
+FILESYSTEM_INCLUDES = Smalltalk/Collections/Streams:Smalltalk/FileSystem/Core:Smalltalk/FileSystem/Disk:Smalltalk/FileSystem/Streams
+
 
 ifdef JIT
 	JIT_ARGS = -Ojit
@@ -20,6 +24,22 @@ ifdef JIT
 else
 	BIN = ./RTruffleMate-no-jit
 	VM = no-jit
+endif
+
+ifndef TRACE_LIMIT
+	TRACE_LIMIT = 15000
+endif
+
+ifdef SUMMARY
+	PYPYLOG=PYPYLOG=jit-summary:$(SUMMARY)
+endif
+
+ifdef LOG
+	PYPYLOG=PYPYLOG=jit-log-opt,jit-backend:$(LOG)
+endif
+
+ifndef SIZE
+	SIZE=10 10 10
 endif
 
 all: compile
@@ -73,20 +93,19 @@ matevm-macro:
 
 #make BENCH=Storage.som som-bench
 som-bench:
-	./som.sh -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) 1 0 1
+	./som.sh -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) $(SIZE)
 
 #make BENCH=Storage.som somvm-bench
 somvm-bench:
-	sudo nice -n-20 $(BIN) -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) 1 0 1
+	sudo nice -n-20 $(BIN) -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) $(SIZE)
 
 #make BENCH=Storage.som mate-bench
 mate-bench:
-	./som.sh --mate -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) 1 0 1
+	./som.sh --mate -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) $(SIZE)
 
 #make BENCH=Storage.som matevm-bench
 matevm-bench:
-	# sudo nice -n-20 $(BIN) --mate -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) 10 0 1
-	$(BIN) --mate --trace-limit 15000 -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) 1 1 1
+	$(PYPYLOG) $(BIN) --mate --trace-limit $(TRACE_LIMIT) -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som $(BENCH) $(SIZE)
 
 mate-iop:
 	make BENCH=VMReflectiveArgumentRead.som mate-bench
@@ -136,10 +155,25 @@ matevm-ss:
 	make BENCH=SumKeys.som somvm-bench
 
 matevm-r:
-	make BENCH=ReadonlySumKeys.som matevm-bench
+	make BENCH=ReadonlySumKeysEnvInObj.som matevm-bench
+
+mate-d:
+	make BENCH=DelegationProxiesSumKeys.som mate-bench
 
 mate-r:
 	make BENCH=ReadonlySumKeysEnvInObj.som mate-bench
+
+matevm-ma:
+	$(BIN) --mate --trace-limit 15000 -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som MoviesAggregate.som 100 0 1000000
+
+mate-ma:
+	./som.sh --mate -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som MoviesAggregate.som 1 0 1000
+
+matevm-mca:
+	$(BIN) --mate --trace-limit 15000 -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som MoviesColumnarAggregate.som 100 0 1000000
+
+mate-mca:
+	./som.sh --mate -cp $(BASE_INCLUDES):$(FILESYSTEM_INCLUDES):$(BENCHS_INCLUDES) Examples/Benchmarks/BenchmarkHarness.som MoviesColumnarAggregate.som 1 0 1
 
 somvm-aiop:
 	make BENCH=VMReflectiveAllOperations.som somvm-bench
